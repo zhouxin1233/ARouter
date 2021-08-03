@@ -34,6 +34,12 @@ public final class ARouter {
     }
 
     /**
+     * ARouter类使用了代理模式，实际调用的是_ARouter的init方法
+     * 这个方法主要完成了几件事情：
+     *
+     * 将各个组的组名和帮助类之间的映射关系存到Warehouse.groupsIndex中
+     * 将各个拦截器的优先级和拦截器的Class对象的映射关系存到Warehouse.interceptorsIndex中
+     * 将各个服务的完整类名和RouteMeta之间的映射关系存到Warehouse.providersIndex中
      * Init, it must be call before used router.
      */
     public static void init(Application application) {

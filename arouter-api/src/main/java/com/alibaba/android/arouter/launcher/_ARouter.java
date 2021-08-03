@@ -58,6 +58,7 @@ final class _ARouter {
     private _ARouter() {
     }
 
+
     protected static synchronized boolean init(Application application) {
         mContext = application;
         LogisticsCenter.init(mContext, executor);
@@ -181,10 +182,12 @@ final class _ARouter {
         if (TextUtils.isEmpty(path)) {
             throw new HandlerException(Consts.TAG + "Parameter is invalid!");
         } else {
+            // pService的相关部分就是实现上文提到的URL的功能
             PathReplaceService pService = ARouter.getInstance().navigation(PathReplaceService.class);
             if (null != pService) {
                 path = pService.forString(path);
             }
+            // extractGoup(path)方法实际上就是从path字符串中取出默认分组
             return build(path, extractGroup(path), true);
         }
     }
@@ -206,6 +209,7 @@ final class _ARouter {
 
     /**
      * Build postcard by path and group
+     * 返回了一个Postcard的实例，Postcard就是一次路由信息的载体。
      */
     protected Postcard build(String path, String group, Boolean afterReplace) {
         if (TextUtils.isEmpty(path) || TextUtils.isEmpty(group)) {
@@ -292,6 +296,7 @@ final class _ARouter {
         postcard.setContext(null == context ? mContext : context);
 
         try {
+            // 在调用这个方法之前，我们的postcard里只含有path和group的信息，而这个方法就是用来完善postcard中的其它路由信息。
             LogisticsCenter.completion(postcard);
         } catch (NoRouteFoundException ex) {
             logger.warning(Consts.TAG, ex.getMessage());
@@ -363,7 +368,7 @@ final class _ARouter {
 
         switch (postcard.getType()) {
             case ACTIVITY:
-                // Build intent
+                // 如果是Activity,则通过intent跳转 Build intent
                 final Intent intent = new Intent(currentContext, postcard.getDestination());
                 intent.putExtras(postcard.getExtras());
 
@@ -373,7 +378,7 @@ final class _ARouter {
                     intent.setFlags(flags);
                 }
 
-                // Non activity, need FLAG_ACTIVITY_NEW_TASK
+                // activity上下文之外调用startActivity需要FLAG_ACTIVITY_NEW_TASK属性 Non activity, need FLAG_ACTIVITY_NEW_TASK
                 if (!(currentContext instanceof Activity)) {
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 }

@@ -1,7 +1,7 @@
 package com.alibaba.android.arouter.facade.enums;
 
 /**
- * Type of route enum.
+ * 路由节点类型的枚举类 Type of route enum.
  *
  * @author Alex <a href="mailto:zhilong.liu@aliyun.com">Contact me.</a>
  * @version 1.0

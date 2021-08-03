@@ -71,7 +71,9 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 @AutoService(Processor.class)
 @SupportedAnnotationTypes({ANNOTATION_TYPE_ROUTE, ANNOTATION_TYPE_AUTOWIRED})
 public class RouteProcessor extends BaseProcessor {
+    // 存放着模块名和模块里所有路由节点的映射关系
     private Map<String, Set<RouteMeta>> groupMap = new HashMap<>(); // ModuleName and routeMeta.
+    // 存放着（分组名-对应分组帮助类的类名）的映射关系
     private Map<String, String> rootMap = new TreeMap<>();  // Map of root metas, used for generate class file in order.
 
     private TypeMirror iProvider = null;
@@ -81,6 +83,7 @@ public class RouteProcessor extends BaseProcessor {
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
 
+        //打印映射表
         if (generateDoc) {
             try {
                 docWriter = mFiler.createResource(
@@ -130,6 +133,7 @@ public class RouteProcessor extends BaseProcessor {
             rootMap.clear();
 
             TypeMirror type_Activity = elementUtils.getTypeElement(ACTIVITY).asType();
+            // 这里的Service是四大组件中的Service
             TypeMirror type_Service = elementUtils.getTypeElement(SERVICE).asType();
             TypeMirror fragmentTm = elementUtils.getTypeElement(FRAGMENT).asType();
             TypeMirror fragmentTmV4 = elementUtils.getTypeElement(Consts.FRAGMENT_V4).asType();
@@ -141,6 +145,7 @@ public class RouteProcessor extends BaseProcessor {
             ClassName routeTypeCn = ClassName.get(RouteType.class);
 
             /*
+               构建ARouter$$Root$$(包名)类的loadinto方法的形参类型
                Build input type, format as :
 
                ```Map<String, Class<? extends IRouteGroup>>```
@@ -155,7 +160,8 @@ public class RouteProcessor extends BaseProcessor {
             );
 
             /*
-
+                构建ARouter$$Group$$(分组名)类 和 ARouter$$Providers$$（模块名）类
+				的loadinto方法的形参类型
               ```Map<String, RouteMeta>```
              */
             ParameterizedTypeName inputMapTypeOfGroup = ParameterizedTypeName.get(
@@ -185,6 +191,11 @@ public class RouteProcessor extends BaseProcessor {
                 Route route = element.getAnnotation(Route.class);
                 RouteMeta routeMeta;
 
+                /**
+                 * 接着来看，遍历routeElements , 而routeElements中存的是含有@Route注解的Element，
+                 * 所以这里每一次循环实际上是对一个含有@Route的（Activity 或 IProvider 或 Service 或 Fragment）分类进行处理，
+                 * 最后调用了categories方法
+                 */
                 // Activity or Fragment
                 if (types.isSubtype(tm, type_Activity) || types.isSubtype(tm, fragmentTm) || types.isSubtype(tm, fragmentTmV4)) {
                     // Get all fields annotation by @Autowired
@@ -213,20 +224,26 @@ public class RouteProcessor extends BaseProcessor {
                     throw new RuntimeException("The @Route is marked on unsupported class, look at [" + tm.toString() + "].");
                 }
 
+                // 上面代码执行完之后，就会得到一个routeMeta，然后再将这个routeMeta传入到categories中
+                // 对传进来的routeMete根据所属分组的不同存到groupMap中
                 categories(routeMeta);
             }
 
+            //JavaPoet语法，构建Provider的loadInto方法
             MethodSpec.Builder loadIntoMethodOfProviderBuilder = MethodSpec.methodBuilder(METHOD_LOAD_INTO)
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .addParameter(providerParamSpec);
 
+            //打印映射表相关
             Map<String, List<RouteDoc>> docSource = new HashMap<>();
 
+            // 开始生成java文件
             // Start generate java source, structure is divided into upper and lower levels, used for demand initialization.
             for (Map.Entry<String, Set<RouteMeta>> entry : groupMap.entrySet()) {
                 String groupName = entry.getKey();
 
+                // JavaPoet语法，构建分组的loadInto方法
                 MethodSpec.Builder loadIntoMethodOfGroupBuilder = MethodSpec.methodBuilder(METHOD_LOAD_INTO)
                         .addAnnotation(Override.class)
                         .addModifiers(PUBLIC)
@@ -234,13 +251,17 @@ public class RouteProcessor extends BaseProcessor {
 
                 List<RouteDoc> routeDocList = new ArrayList<>();
 
+                // 构建方法里的内容
                 // Build group method body
                 Set<RouteMeta> groupData = entry.getValue();
                 for (RouteMeta routeMeta : groupData) {
                     RouteDoc routeDoc = extractDocInfo(routeMeta);
 
+                    //类名
                     ClassName className = ClassName.get((TypeElement) routeMeta.getRawType());
 
+                    //上面提到Provider的映射关系在ARouter$$Group$***和ARouter$$Providers$$***
+                    //中都会出现，这段代码块就是构建ARouter$$Providers$$***文件中的loadInto方法
                     switch (routeMeta.getType()) {
                         case PROVIDER:  // Need cache provider's super class
                             List<? extends TypeMirror> interfaces = ((TypeElement) routeMeta.getRawType()).getInterfaces();
@@ -274,6 +295,7 @@ public class RouteProcessor extends BaseProcessor {
                             break;
                     }
 
+                    // 在paramsType 中存入需要自动绑定的成员变量的信息
                     // Make map body for paramsType
                     StringBuilder mapBodyBuilder = new StringBuilder();
                     Map<String, Integer> paramsType = routeMeta.getParamsType();
@@ -311,7 +333,7 @@ public class RouteProcessor extends BaseProcessor {
                     routeDocList.add(routeDoc);
                 }
 
-                // Generate groups
+                // 生成ARouter$$Group$$***文件 / Generate groups
                 String groupFileName = NAME_OF_GROUP + groupName;
                 JavaFile.builder(PACKAGE_OF_GENERATE_FILE,
                         TypeSpec.classBuilder(groupFileName)
@@ -327,6 +349,7 @@ public class RouteProcessor extends BaseProcessor {
                 docSource.put(groupName, routeDocList);
             }
 
+            //构建ARouter$$
             if (MapUtils.isNotEmpty(rootMap)) {
                 // Generate root meta by group name, it must be generated before root, then I can find out the class of group.
                 for (Map.Entry<String, String> entry : rootMap.entrySet()) {
@@ -334,14 +357,14 @@ public class RouteProcessor extends BaseProcessor {
                 }
             }
 
-            // Output route doc
+            // 打印映射表相关 /Output route doc
             if (generateDoc) {
                 docWriter.append(JSON.toJSONString(docSource, SerializerFeature.PrettyFormat));
                 docWriter.flush();
                 docWriter.close();
             }
 
-            // Write provider into disk
+            //  // 生成ARouter$$PRoviders$$*** 文件 / Write provider into disk
             String providerMapFileName = NAME_OF_PROVIDER + SEPARATOR + moduleName;
             JavaFile.builder(PACKAGE_OF_GENERATE_FILE,
                     TypeSpec.classBuilder(providerMapFileName)
@@ -354,7 +377,7 @@ public class RouteProcessor extends BaseProcessor {
 
             logger.info(">>> Generated provider map, name is " + providerMapFileName + " <<<");
 
-            // Write root meta into disk.
+            // 生成ARouter$$Root$$*** 文件 /Write root meta into disk.
             String rootFileName = NAME_OF_ROOT + SEPARATOR + moduleName;
             JavaFile.builder(PACKAGE_OF_GENERATE_FILE,
                     TypeSpec.classBuilder(rootFileName)
@@ -413,11 +436,12 @@ public class RouteProcessor extends BaseProcessor {
     }
 
     /**
-     * Sort metas in group.
+     * 对传进来的routeMete根据所属分组的不同存到groupMap中 Sort metas in group.
      *
      * @param routeMete metas.
      */
     private void categories(RouteMeta routeMete) {
+        // 检验路径合法性
         if (routeVerify(routeMete)) {
             logger.info(">>> Start categories, group = " + routeMete.getGroup() + ", path = " + routeMete.getPath() + " <<<");
             Set<RouteMeta> routeMetas = groupMap.get(routeMete.getGroup());

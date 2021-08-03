@@ -42,14 +42,16 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 
 /**
  * Processor used to create autowired helper
+ * 用于处理@Autowired这个注解
+ * AutowiredProcessor用来生成各种以 Autowired为后缀的帮助类文件
  *
- * @author zhilong <a href="mailto:zhilong.lzl@alibaba-inc.com">Contact me.</a>
- * @version 1.0
- * @since 2017/2/20 下午5:56
+ * 这些帮助类最后会在运行时被用来进行成员变量的自动注入
+ * 使用帮助类而不是运行时直接反射对成员变量赋值，避免了反射过多的开销
  */
 @AutoService(Processor.class)
 @SupportedAnnotationTypes({ANNOTATION_TYPE_AUTOWIRED})
 public class AutowiredProcessor extends BaseProcessor {
+    // 储存着 (路由节点 - 需要自动注入的参数）的映射关系
     private Map<TypeElement, List<Element>> parentAndChild = new HashMap<>();   // Contain field need autowired and his super class.
     private static final ClassName ARouterClass = ClassName.get("com.alibaba.android.arouter.launcher", "ARouter");
     private static final ClassName AndroidLog = ClassName.get("android.util", "Log");
@@ -66,7 +68,9 @@ public class AutowiredProcessor extends BaseProcessor {
         if (CollectionUtils.isNotEmpty(set)) {
             try {
                 logger.info(">>> Found autowired field, start... <<<");
+                // 所有传进来的element进行扫描，将它们所在的路由节点和它们的映射关系存到上文提到的parentAndChild参数中
                 categories(roundEnvironment.getElementsAnnotatedWith(Autowired.class));
+                // 生成帮助类文件
                 generateHelper();
 
             } catch (Exception e) {
@@ -86,12 +90,13 @@ public class AutowiredProcessor extends BaseProcessor {
         TypeMirror fragmentTm = elementUtils.getTypeElement(Consts.FRAGMENT).asType();
         TypeMirror fragmentTmV4 = elementUtils.getTypeElement(Consts.FRAGMENT_V4).asType();
 
-        // Build input param name.
+        // JavaPoet语法 构建帮助类的inject方法的形参Object target / Build input param name.
         ParameterSpec objectParamSpec = ParameterSpec.builder(TypeName.OBJECT, "target").build();
 
         if (MapUtils.isNotEmpty(parentAndChild)) {
+            // 遍历parentAndChild,每一次循环生成一个帮助类文件，即为每一个含有自动注入变量的路由节点都生成一个帮助类
             for (Map.Entry<TypeElement, List<Element>> entry : parentAndChild.entrySet()) {
-                // Build method : 'inject'
+                //  JavaPoet语法，构建public inject(Object target)方法 / Build method : 'inject'
                 MethodSpec.Builder injectMethodBuilder = MethodSpec.methodBuilder(METHOD_INJECT)
                         .addAnnotation(Override.class)
                         .addModifiers(PUBLIC)
@@ -106,21 +111,29 @@ public class AutowiredProcessor extends BaseProcessor {
 
                 logger.info(">>> Start process " + childs.size() + " field in " + parent.getSimpleName() + " ... <<<");
 
+                // JavaPoet 语法,构建帮助类,修饰符为public,并实现ISyringe接口
                 TypeSpec.Builder helper = TypeSpec.classBuilder(fileName)
                         .addJavadoc(WARNING_TIPS)
                         .addSuperinterface(ClassName.get(type_ISyringe))
                         .addModifiers(PUBLIC);
 
+                // JavaPoet 语法，构建成员变量private SerializationService serializationService
+                // 这个成员变量是用于序列化自定义的对象
                 FieldSpec jsonServiceField = FieldSpec.builder(TypeName.get(type_JsonService.asType()), "serializationService", Modifier.PRIVATE).build();
                 helper.addField(jsonServiceField);
 
+                //构建inject方法体serializationService = ARouter.getInstance().navigation(SerializationService.class);
+                //可以看到实例的获得是通过Arouter获得服务的方式
                 injectMethodBuilder.addStatement("serializationService = $T.getInstance().navigation($T.class)", ARouterClass, ClassName.get(type_JsonService));
                 injectMethodBuilder.addStatement("$T substitute = ($T)target", ClassName.get(parent), ClassName.get(parent));
 
-                // Generate method body, start inject.
+                // 构建inject方法体，遍历childs，为每一个childs添加赋值语句 Generate method body, start inject.
                 for (Element element : childs) {
                     Autowired fieldConfig = element.getAnnotation(Autowired.class);
                     String fieldName = element.getSimpleName().toString();
+
+                    //如果这个成员变量是IPrivider 的实现类（即自定义的各种服务），就通过ARouter获取服务的方式去获得实例
+                    //如果在@Autowired这个注解中指定了name，则通过byName方式,否则通过byType方式
                     if (types.isSubtype(element.asType(), iProvider)) {  // It's provider
                         if ("".equals(fieldConfig.name())) {    // User has not set service path, then use byType.
 
@@ -140,7 +153,7 @@ public class AutowiredProcessor extends BaseProcessor {
                             );
                         }
 
-                        // Validator
+                        // Validator   如果需要进行非空检验，则添加非空检验的语法
                         if (fieldConfig.required()) {
                             injectMethodBuilder.beginControlFlow("if (substitute." + fieldName + " == null)");
                             injectMethodBuilder.addStatement(
@@ -148,18 +161,23 @@ public class AutowiredProcessor extends BaseProcessor {
                             injectMethodBuilder.endControlFlow();
                         }
                     } else {    // It's normal intent value
+                        // 这个成员变量不是IProvider
+                        // 通过isActivity标记目标路由节点是不是Activity
                         String originalValue = "substitute." + fieldName;
                         String statement = "substitute." + fieldName + " = " + buildCastCode(element) + "substitute.";
                         boolean isActivity = false;
                         if (types.isSubtype(parent.asType(), activityTm)) {  // Activity, then use getIntent()
+                            // 是Activity就通过getIntent()的方式获得传递过来的参数
                             isActivity = true;
                             statement += "getIntent().";
                         } else if (types.isSubtype(parent.asType(), fragmentTm) || types.isSubtype(parent.asType(), fragmentTmV4)) {   // Fragment, then use getArguments()
+                            // 是fragment就通过getArguments()的方式获得传递过来的参数
                             statement += "getArguments().";
                         } else {
                             throw new IllegalAccessException("The field [" + fieldName + "] need autowired from intent, its parent must be activity or fragment!");
                         }
 
+                        //JavaPoet语法
                         statement = buildStatement(originalValue, statement, typeUtils.typeExchange(element), isActivity, isKtClass(parent));
                         if (statement.startsWith("serializationService.")) {   // Not mortals
                             injectMethodBuilder.beginControlFlow("if (null != serializationService)");
@@ -176,7 +194,7 @@ public class AutowiredProcessor extends BaseProcessor {
                             injectMethodBuilder.addStatement(statement, StringUtils.isEmpty(fieldConfig.name()) ? fieldName : fieldConfig.name());
                         }
 
-                        // Validator
+                        // Validator 如果需要进行非空检验，则添加非空检验的语法
                         if (fieldConfig.required() && !element.asType().getKind().isPrimitive()) {  // Primitive wont be check.
                             injectMethodBuilder.beginControlFlow("if (null == substitute." + fieldName + ")");
                             injectMethodBuilder.addStatement(
@@ -186,9 +204,10 @@ public class AutowiredProcessor extends BaseProcessor {
                     }
                 }
 
+                //JavaPoet语法
                 helper.addMethod(injectMethodBuilder.build());
 
-                // Generate autowire helper
+                // Generate autowire helper 输出帮助类的java文件
                 JavaFile.builder(packageName, helper.build()).build().writeTo(mFiler);
 
                 logger.info(">>> " + parent.getSimpleName() + " has been processed, " + fileName + " has been generated. <<<");
@@ -263,6 +282,7 @@ public class AutowiredProcessor extends BaseProcessor {
 
     /**
      * Categories field, find his papa.
+     * 就是对所有传进来的element进行扫描，将它们所在的路由节点和它们的映射关系存到 的parentAndChild参数中
      *
      * @param elements Field need autowired
      */
@@ -271,11 +291,13 @@ public class AutowiredProcessor extends BaseProcessor {
             for (Element element : elements) {
                 TypeElement enclosingElement = (TypeElement) element.getEnclosingElement();
 
+                // 被标记的成员变量不能为private，否则抛出异常
                 if (element.getModifiers().contains(Modifier.PRIVATE)) {
                     throw new IllegalAccessException("The inject fields CAN NOT BE 'private'!!! please check field ["
                             + element.getSimpleName() + "] in class [" + enclosingElement.getQualifiedName() + "]");
                 }
 
+                // 将映射关系添加到parentAndChild中
                 if (parentAndChild.containsKey(enclosingElement)) { // Has categries
                     parentAndChild.get(enclosingElement).add(element);
                 } else {

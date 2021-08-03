@@ -56,6 +56,8 @@ public class LogisticsCenter {
     private static boolean registerByPlugin;
 
     /**
+     * 这里可以使用ARouter官方推出的一个AndroidStudio插件，但这里没有使用所以直接把registerByPlugin赋值为了false
+     * ，目前这个项目还在维护，可能是官方接下来要在这里有所改动，我们不用理会
      * arouter-auto-register plugin will generate code inside this method
      * call this method to register all Routers, Interceptors and Providers
      */
@@ -149,8 +151,10 @@ public class LogisticsCenter {
             if (registerByPlugin) {
                 logger.info(TAG, "Load router map by arouter-auto-register plugin.");
             } else {
+                // routerMap 存的是各个帮助类的类名
                 Set<String> routerMap;
 
+                // 如果是处于开发环境或者是新版本，则重新扫描一次配置文件，以保证获得的routerMap含有最新的帮助类信息，否则就直接从缓存中读取，以加快初始化速度
                 // It will rebuild router map every times when debuggable.
                 if (ARouter.debuggable() || PackageUtils.isNewVersion(context)) {
                     logger.info(TAG, "Run with debug mode or new install, rebuild router map.");
@@ -169,12 +173,18 @@ public class LogisticsCenter {
                 logger.info(TAG, "Find router map finished, map size = " + routerMap.size() + ", cost " + (System.currentTimeMillis() - startInit) + " ms.");
                 startInit = System.currentTimeMillis();
 
+                // 所以其实就分成了三类：
+                // 以 com.alibaba.android.arouter.routes.Arouter&&Root 开头的根节点帮助类
+                // 以 com.alibaba.android.arouter.routes.Arouter&&Interceptors 开头的拦截器帮助类
+                // 以 com.alibaba.android.arouter.routes.Arouter&&Providers 开头的服务帮助类
                 for (String className : routerMap) {
                     if (className.startsWith(ROUTE_ROOT_PAKCAGE + DOT + SDK_NAME + SEPARATOR + SUFFIX_ROOT)) {
                         // This one of root elements, load root.
+                        // ARouter采用了分组加载机制，这里实际上就是将各个组的名称和对应的帮助类的映射关系储存在Warehouse的groupIndex中
                         ((IRouteRoot) (Class.forName(className).getConstructor().newInstance())).loadInto(Warehouse.groupsIndex);
                     } else if (className.startsWith(ROUTE_ROOT_PAKCAGE + DOT + SDK_NAME + SEPARATOR + SUFFIX_INTERCEPTORS)) {
                         // Load interceptorMeta
+                        //拦截器帮助类的loadInto方法，它传入的参数是Warehouse.interceptorsIndex，存放的是拦截器的优先级和对应的拦截器的映射关系
                         ((IInterceptorGroup) (Class.forName(className).getConstructor().newInstance())).loadInto(Warehouse.interceptorsIndex);
                     } else if (className.startsWith(ROUTE_ROOT_PAKCAGE + DOT + SDK_NAME + SEPARATOR + SUFFIX_PROVIDERS)) {
                         // Load providerIndex
@@ -222,8 +232,15 @@ public class LogisticsCenter {
         if (null == postcard) {
             throw new NoRouteFoundException(TAG + "No postcard!");
         }
+       // ARouter的分组机制的加载实际上是使用了懒加载的机制，在一开始时ARouter只会将根节点的配置文件加载进来，各个组的配置文件不会被加载。
+       // Warehouse.routes 里存放的就是已经被加载的分组
+       // Warehouse.groupsIndex 里存放的就是还没有被加载的分组
 
+        // 先试图靠path从Warehouse.routes中获得代表路由目标（目标有可能是Activity，Fragment, Provider）的RouteMeta对象
         RouteMeta routeMeta = Warehouse.routes.get(postcard.getPath());
+
+        // 如果返回null则说明这个目标所在的分组还没有被加载，这时候就会再试图根据目标所在的分组名称
+        // 从Warehouse.groupIndex中获得还没有被加载的分组，如果还是没有找到则抛出异常，找到了就将这个分组加载进来
         if (null == routeMeta) {
             // Maybe its does't exist, or didn't load.
             if (!Warehouse.groupsIndex.containsKey(postcard.getGroup())) {
@@ -244,15 +261,21 @@ public class LogisticsCenter {
                     throw new HandlerException(TAG + "Fatal exception when loading group meta. [" + e.getMessage() + "]");
                 }
 
+                // 重新调用completion方法，这个时候已经确保了Warehouse.routes中已经含有本次路由的目标
                 completion(postcard);   // Reload
             }
         } else {
+            // 路由目标
             postcard.setDestination(routeMeta.getDestination());
+            //路由
             postcard.setType(routeMeta.getType());
+            //优先级
             postcard.setPriority(routeMeta.getPriority());
+            //extra
             postcard.setExtra(routeMeta.getExtra());
 
             Uri rawUri = postcard.getUri();
+            // 如果是通过Uri跳转，则需要解析出Uri中的参数
             if (null != rawUri) {   // Try to set params into bundle.
                 Map<String, String> resultMap = TextUtils.splitQueryParameters(rawUri);
                 Map<String, Integer> paramsType = routeMeta.getParamsType();
@@ -359,6 +382,7 @@ public class LogisticsCenter {
         if (Warehouse.groupsIndex.containsKey(groupName)){
             // If this group is included, but it has not been loaded
             // load this group first, because dynamic route has high priority.
+            // 加载的过程很简单，通过Class对象获得实例，调用loadInto方法把映射关系加载到Warehouse.routes中，然后从Warehouse.groupsIndex中将这个分组移除，代表这个分组已经被加载。
             Warehouse.groupsIndex.get(groupName).getConstructor().newInstance().loadInto(Warehouse.routes);
             Warehouse.groupsIndex.remove(groupName);
         }

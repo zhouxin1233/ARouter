@@ -43,6 +43,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 @AutoService(Processor.class)
 @SupportedAnnotationTypes(ANNOTATION_TYPE_INTECEPTOR)
 public class InterceptorProcessor extends BaseProcessor {
+    // 存放着优先级和拦截器的映射关系, TreeMap默认会按照key进行排序，所以这就实现了拦截器按优先级进行排序
     private Map<Integer, Element> interceptors = new TreeMap<>();
     private TypeMirror iInterceptor = null;
 
@@ -87,11 +88,13 @@ public class InterceptorProcessor extends BaseProcessor {
 
             // Verify and cache, sort incidentally.
             for (Element element : elements) {
+                // verify 方法很简单,就是判断传入的element有没有@Interceptor注解并实现了IIntercptor接口
                 if (verify(element)) {  // Check the interceptor meta
                     logger.info("A interceptor verify over, its " + element.asType());
                     Interceptor interceptor = element.getAnnotation(Interceptor.class);
 
                     Element lastInterceptor = interceptors.get(interceptor.priority());
+                    // 如果已添加过相同优先级的拦截器，则抛出异常
                     if (null != lastInterceptor) { // Added, throw exceptions
                         throw new IllegalArgumentException(
                                 String.format(Locale.getDefault(), "More than one interceptors use same priority [%d], They are [%s] and [%s].",
@@ -101,17 +104,19 @@ public class InterceptorProcessor extends BaseProcessor {
                         );
                     }
 
+                    // 将拦截器的优先级和拦截器的映射关系添加进去
                     interceptors.put(interceptor.priority(), element);
                 } else {
                     logger.error("A interceptor verify failed, its " + element.asType());
                 }
             }
 
-            // Interface of ARouter.
+            //  分别为IInterceptor和IInterceptorGroup接口的TypeElement实例 / Interface of ARouter.
             TypeElement type_ITollgate = elementUtils.getTypeElement(IINTERCEPTOR);
             TypeElement type_ITollgateGroup = elementUtils.getTypeElement(IINTERCEPTOR_GROUP);
 
             /**
+             * JavaPoet语法，构建形参类型Map<Integer, Class<? extends ITollgate>>
              *  Build input type, format as :
              *
              *  ```Map<Integer, Class<? extends ITollgate>>```
@@ -125,16 +130,16 @@ public class InterceptorProcessor extends BaseProcessor {
                     )
             );
 
-            // Build input param name.
+            // JavaPoet语法，构建形参名 Build input param name.
             ParameterSpec tollgateParamSpec = ParameterSpec.builder(inputMapTypeOfTollgate, "interceptors").build();
 
-            // Build method : 'loadInto'
+            // JavaPoet语法，构建loadinto方法 Build method : 'loadInto'
             MethodSpec.Builder loadIntoMethodOfTollgateBuilder = MethodSpec.methodBuilder(METHOD_LOAD_INTO)
                     .addAnnotation(Override.class)
                     .addModifiers(PUBLIC)
                     .addParameter(tollgateParamSpec);
 
-            // Generate
+            // Generate  构建方法体，为每一个interceptor都添加一条类似interceptors.put(7, Test1Interceptor.class)的语句
             if (null != interceptors && interceptors.size() > 0) {
                 // Build method body
                 for (Map.Entry<Integer, Element> entry : interceptors.entrySet()) {
@@ -142,7 +147,7 @@ public class InterceptorProcessor extends BaseProcessor {
                 }
             }
 
-            // Write to disk(Write file even interceptors is empty.)
+            //  生成Arouter$$Interceptors$$(模块名) 文件  Write to disk(Write file even interceptors is empty.)
             JavaFile.builder(PACKAGE_OF_GENERATE_FILE,
                     TypeSpec.classBuilder(NAME_OF_INTERCEPTOR + SEPARATOR + moduleName)
                             .addModifiers(PUBLIC)

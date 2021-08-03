@@ -1,7 +1,7 @@
 package com.alibaba.android.arouter.facade.enums;
 
 /**
- * Kind of field type.
+ * Kind of field type.参数类型的枚举类，用于代表需要自动注入的参数的类型
  *
  * @author Alex <a href="mailto:zhilong.liu@aliyun.com">Contact me.</a>
  * @version 1.0

@@ -9,6 +9,21 @@
 ---
 
 #### 最新版本
+app 目录不用多说  
+&nbsp;
+arouter-annotation 这里面定义了一些数据类型和注解。比如说@Route  
+&nbsp;
+arouter-api 这个是我们本章重点分析的库，主要核心代码都在这。  
+&nbsp;
+arouter-compiler 是arouter-api的注解处理器  
+&nbsp;
+arouter-gradle-plugin 是 arouter-register Gradle插件脚本的源码。作用是通过编译时自动注册组件  
+&nbsp;
+arouter-idea-plugin 这个库是ARouter Helper这个Android studio插件的源码  
+&nbsp;
+module-java和module-kotlin是两个demo库分别用java和Kotlin来实现。主要是一些使用上的区别  
+&nbsp;
+
 
 模块|arouter-api|arouter-compiler|arouter-register|arouter-idea-plugin
 ---|---|---|---|---

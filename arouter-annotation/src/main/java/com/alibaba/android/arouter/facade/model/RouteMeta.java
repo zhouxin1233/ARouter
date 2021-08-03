@@ -10,23 +10,20 @@ import javax.lang.model.element.Element;
 
 /**
  * It contains basic route information.
- *
- * @author Alex <a href="mailto:zhilong.liu@aliyun.com">Contact me.</a>
- * @version 1.0
- * @since 16/8/24 09:45
+ * 包含了一次路由操作需要的所有信息
  */
 public class RouteMeta {
-    private RouteType type;         // Type of route
-    private Element rawType;        // Raw type of route
-    private Class<?> destination;   // Destination
-    private String path;            // Path of route
-    private String group;           // Group of route
-    private int priority = -1;      // The smaller the number, the higher the priority
-    private int extra;              // Extra data
-    private Map<String, Integer> paramsType;  // Param type
+    private RouteType type;         // Type of route     目标路由节点的类型，
+    private Element rawType;        // Raw type of route 目标路由节点的Element , 对Element类还不了解的可以先面向搜索引擎学习一下
+    private Class<?> destination;   // Destination       目标路由节点的Class 对象
+    private String path;            // Path of route    目标路由节点的path，(即@Route注解中的path值)
+    private String group;           // Group of route   目标路由节点的group，(即@Route注解中的group值)
+    private int priority = -1;      // The smaller the number, the higher the priority 目标路由节点的priority，(即@Route注解中的priority值)
+    private int extra;              // Extra data       目标路由节点的extra，(即@Route注解中的extra值)
+    private Map<String, Integer> paramsType;  // Param type 目标路由节点中需要自动注入的参数的（名称-参数类型）映射关系，这里的Integer值代表着枚举类TypeKind（上文已提过）的 ordinal
     private String name;
 
-    private Map<String, Autowired> injectConfig;  // Cache inject config.
+    private Map<String, Autowired> injectConfig;  // Cache inject config. 该路由节点中需要自动注入的(成员变量名-@Autowired)的映射关系
 
     public RouteMeta() {
     }

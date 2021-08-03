@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * Description route info, used for generate router map
- *
+ *  这个类主要是用于生成路由表供查看，不涉及框架逻辑
  * @author zhilong <a href="mailto:zhilong.liu@aliyun.com">Contact me.</a>
  * @version 1.0
  * @since 2018/8/9 11:59 AM
