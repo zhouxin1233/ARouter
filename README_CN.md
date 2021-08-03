@@ -9,7 +9,7 @@
 ---
 
 #### 最新版本
-app 目录不用多说  
+app 目录  
 &nbsp;
 arouter-annotation 这里面定义了一些数据类型和注解。比如说@Route  
 &nbsp;
