@@ -40,12 +40,22 @@ public abstract class BaseProcessor extends AbstractProcessor {
     public synchronized void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
 
+        /*  常用变量初始化 start *****/
         mFiler = processingEnv.getFiler();
         types = processingEnv.getTypeUtils();
         elementUtils = processingEnv.getElementUtils();
         typeUtils = new TypeUtils(types, elementUtils);
         logger = new Logger(processingEnv.getMessager());
+        /*  常用变量初始化 end *****/
 
+        // options对象就是我们在每个module中声明的参数的集合
+        /**
+         * javaCompileOptions {
+         *             annotationProcessorOptions {
+         *                 arguments = [AROUTER_MODULE_NAME: project.getName(), AROUTER_GENERATE_DOC: "enable"]
+         *             }
+         *         }
+         */
         // Attempt to get user configuration [moduleName]
         Map<String, String> options = processingEnv.getOptions();
         if (MapUtils.isNotEmpty(options)) {

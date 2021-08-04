@@ -110,6 +110,7 @@ public class RouteProcessor extends BaseProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (CollectionUtils.isNotEmpty(annotations)) {
+            // 获取@Route注解的集合
             Set<? extends Element> routeElements = roundEnv.getElementsAnnotatedWith(Route.class);
             try {
                 logger.info(">>> Found routes, start... <<<");
@@ -198,6 +199,7 @@ public class RouteProcessor extends BaseProcessor {
                  */
                 // Activity or Fragment
                 if (types.isSubtype(tm, type_Activity) || types.isSubtype(tm, fragmentTm) || types.isSubtype(tm, fragmentTmV4)) {
+                    // 获取 Activity 中 @Autowired 注解的属性，IProvider 类型的除外
                     // Get all fields annotation by @Autowired
                     Map<String, Integer> paramsType = new HashMap<>();
                     Map<String, Autowired> injectConfig = new HashMap<>();
@@ -224,8 +226,8 @@ public class RouteProcessor extends BaseProcessor {
                     throw new RuntimeException("The @Route is marked on unsupported class, look at [" + tm.toString() + "].");
                 }
 
-                // 上面代码执行完之后，就会得到一个routeMeta，然后再将这个routeMeta传入到categories中
-                // 对传进来的routeMete根据所属分组的不同存到groupMap中
+                // 上面代码执行完之后，将@Route修饰的类信息封装进RouteMeta中
+                // ，然后再将这个routeMeta传入到categories中 根据所属分组的不同存到groupMap中
                 categories(routeMeta);
             }
 

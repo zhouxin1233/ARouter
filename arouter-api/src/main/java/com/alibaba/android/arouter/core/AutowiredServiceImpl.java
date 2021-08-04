@@ -21,7 +21,9 @@ import static com.alibaba.android.arouter.utils.Consts.SUFFIX_AUTOWIRED;
  */
 @Route(path = "/arouter/service/autowired")
 public class AutowiredServiceImpl implements AutowiredService {
+    // classCache的作用是缓存类对象。它的类型LruCache得知，会把最近最少使用到的类删除
     private LruCache<String, ISyringe> classCache;
+    // 应该就是一个黑名单，这里面的类都不会被初始化。
     private List<String> blackList;
 
     @Override
@@ -30,6 +32,10 @@ public class AutowiredServiceImpl implements AutowiredService {
         blackList = new ArrayList<>();
     }
 
+    /**
+     * 这个服务类所要显示的功能
+     * @param instance the instance who need autowired.
+     */
     @Override
     public void autowire(Object instance) {
         doInject(instance, null);
@@ -42,8 +48,10 @@ public class AutowiredServiceImpl implements AutowiredService {
      * @param parent   parent of me.
      */
     private void doInject(Object instance, Class<?> parent) {
+        // 首先根据参数instance对象获取到对应的类名。
         Class<?> clazz = null == parent ? instance.getClass() : parent;
 
+        // @Autowire 实例化的类其父类都是ISyringe
         ISyringe syringe = getSyringe(clazz);
         if (null != syringe) {
             syringe.inject(instance);
@@ -60,11 +68,15 @@ public class AutowiredServiceImpl implements AutowiredService {
         String className = clazz.getName();
 
         try {
+            // 判断这个类名是否在黑名单中
             if (!blackList.contains(className)) {
+                // 如果不在中黑名单中就从classCache中获取。
                 ISyringe syringeHelper = classCache.get(className);
                 if (null == syringeHelper) {  // No cache.
+                    // 如果没在classCache中，就通过反射的方式实例化instance对应类名+$$Autowired所对应的类对象。
                     syringeHelper = (ISyringe) Class.forName(clazz.getName() + SUFFIX_AUTOWIRED).getConstructor().newInstance();
                 }
+                // 最后把实例化的类存放到classCache中（减少反射次数，减少性能消耗）
                 classCache.put(className, syringeHelper);
                 return syringeHelper;
             }

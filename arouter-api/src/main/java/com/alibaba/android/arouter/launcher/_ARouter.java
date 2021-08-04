@@ -182,12 +182,12 @@ final class _ARouter {
         if (TextUtils.isEmpty(path)) {
             throw new HandlerException(Consts.TAG + "Parameter is invalid!");
         } else {
-            // pService的相关部分就是实现上文提到的URL的功能
+            // 预留的一个前置处理path的服务类。可以实现该接口，对所有path做处理。
             PathReplaceService pService = ARouter.getInstance().navigation(PathReplaceService.class);
             if (null != pService) {
                 path = pService.forString(path);
             }
-            // extractGoup(path)方法实际上就是从path字符串中取出默认分组
+            // extractGoup(path)方法实际上就是从path字符串中取出默认分组 group字段
             return build(path, extractGroup(path), true);
         }
     }
@@ -216,6 +216,7 @@ final class _ARouter {
             throw new HandlerException(Consts.TAG + "Parameter is invalid!");
         } else {
             if (!afterReplace) {
+                // 对path做二次处理。
                 PathReplaceService pService = ARouter.getInstance().navigation(PathReplaceService.class);
                 if (null != pService) {
                     path = pService.forString(path);
@@ -284,8 +285,11 @@ final class _ARouter {
      * @param postcard    Route metas
      * @param requestCode RequestCode
      * @param callback    cb
+     * @return 返回类型是Object，可以看出有很多不同类型的返回类型包括了Fragment，自定义的服务类（实现了IProvider接口，可以做一些通用的服务）
      */
     protected Object navigation(final Context context, final Postcard postcard, final int requestCode, final NavigationCallback callback) {
+        // PretreatmentService类是框架中预留的一个服务类（需要自己实现），可以在路由前做一些操作，
+        // 比如可以cancel掉这次的路由跳转。触发时机比拦截器更早
         PretreatmentService pretreatmentService = ARouter.getInstance().navigation(PretreatmentService.class);
         if (null != pretreatmentService && !pretreatmentService.onPretreatment(context, postcard)) {
             // Pretreatment failed, navigation canceled.
@@ -317,6 +321,7 @@ final class _ARouter {
                 callback.onLost(postcard);
             } else {
                 // No callback for this invoke, then we use the global degrade service.
+                // 对没有实现NavigationCallback接口的路由操作，可以统一有一个降级操作
                 DegradeService degradeService = ARouter.getInstance().navigation(DegradeService.class);
                 if (null != degradeService) {
                     degradeService.onLost(context, postcard);
@@ -330,6 +335,7 @@ final class _ARouter {
             callback.onFound(postcard);
         }
 
+        // 判断这个路由操作是否走绿色通道，也就是不受拦截器的处理。默认的获取Fragment实例和Provider是不受拦截器拦截的。当然也可以自己设置走绿色通过。
         if (!postcard.isGreenChannel()) {   // It must be run in async thread, maybe interceptor cost too mush time made ANR.
             interceptorService.doInterceptions(postcard, new InterceptorCallback() {
                 /**
@@ -378,7 +384,7 @@ final class _ARouter {
                     intent.setFlags(flags);
                 }
 
-                // activity上下文之外调用startActivity需要FLAG_ACTIVITY_NEW_TASK属性 Non activity, need FLAG_ACTIVITY_NEW_TASK
+                // currentContext不是activity类型时，会设置Flag FLAG_ACTIVITY_NEW_TASK属性 Non activity, need FLAG_ACTIVITY_NEW_TASK
                 if (!(currentContext instanceof Activity)) {
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 }
@@ -404,7 +410,7 @@ final class _ARouter {
             case CONTENT_PROVIDER:
             case FRAGMENT:
                 Class<?> fragmentMeta = postcard.getDestination();
-                try {
+                try { // todo:zx 这里不是androidX 的fragment
                     Object instance = fragmentMeta.getConstructor().newInstance();
                     if (instance instanceof Fragment) {
                         ((Fragment) instance).setArguments(postcard.getExtras());

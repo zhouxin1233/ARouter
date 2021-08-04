@@ -49,6 +49,7 @@ public final class ARouter {
             hasInit = _ARouter.init(application);
 
             if (hasInit) {
+                // 该方法中实例了 InterceptorServiceImpl 类，该类是拦截器的处理中心，所有自定义的拦截器的分发都在这里完成
                 _ARouter.afterInit();
             }
 
