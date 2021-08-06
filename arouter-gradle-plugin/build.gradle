@@ -1,12 +1,9 @@
 apply plugin: 'groovy'
 
 dependencies {
-    compile gradleApi()
-    compile localGroovy()
-}
-
-dependencies {
-    compile 'com.android.tools.build:gradle:2.1.3'
+    implementation gradleApi()
+    implementation localGroovy()
+    implementation 'com.android.tools.build:gradle:4.1.3'
 }
 
 apply from: rootProject.file('gradle/publish.gradle')
