@@ -61,11 +61,14 @@ class RegisterTransform extends Transform {
                    , Collection<TransformInput> referencedInputs
                    , TransformOutputProvider outputProvider
                    , boolean isIncremental) throws IOException, TransformException, InterruptedException {
-
-        Logger.i('Start scan register info in jar file.')
+        Logger.w('Start scan register info in jar file.')
 
         long startTime = System.currentTimeMillis()
         boolean leftSlash = File.separator == '/'
+
+        if (!isIncremental){
+            outputProvider.deleteAll()
+        }
 
         inputs.each { TransformInput input ->
 
@@ -110,11 +113,11 @@ class RegisterTransform extends Transform {
             }
         }
 
-        Logger.i('Scan finish, current cost time ' + (System.currentTimeMillis() - startTime) + "ms")
+        Logger.w('Scan finish, current cost time ' + (System.currentTimeMillis() - startTime) + "ms")
 
         if (fileContainsInitClass) {
             registerList.each { ext ->
-                Logger.i('Insert register code to file ' + fileContainsInitClass.absolutePath)
+                Logger.w('Insert register code to file ' + fileContainsInitClass.absolutePath)
 
                 if (ext.classList.isEmpty()) {
                     Logger.e("No class implements found for interface:" + ext.interfaceName)
@@ -127,6 +130,6 @@ class RegisterTransform extends Transform {
             }
         }
 
-        Logger.i("Generate code finish, current cost time: " + (System.currentTimeMillis() - startTime) + "ms")
+        Logger.w("Generate code finish, current cost time: " + (System.currentTimeMillis() - startTime) + "ms")
     }
 }

@@ -19,18 +19,18 @@ class ScanUtil {
 
     /**
      * scan jar file
-     * @param jarFile All jar files that are compiled into apk
+     * @param src All jar files that are compiled into apk
      * @param destFile dest file after this transform
      */
-    static void scanJar(File jarFile, File destFile) {
-        if (jarFile) {
-            def file = new JarFile(jarFile)
-            Enumeration enumeration = file.entries()
+    static void scanJar(File src, File destFile) {
+        if (src) {
+            JarFile jarFile = new JarFile(src)
+            Enumeration enumeration = jarFile.entries()
             while (enumeration.hasMoreElements()) {
                 JarEntry jarEntry = (JarEntry) enumeration.nextElement()
                 String entryName = jarEntry.getName()
                 if (entryName.startsWith(ScanSetting.ROUTER_CLASS_PACKAGE_NAME)) {
-                    InputStream inputStream = file.getInputStream(jarEntry)
+                    InputStream inputStream = jarFile.getInputStream(jarEntry)
                     scanClass(inputStream)
                     inputStream.close()
                 } else if (ScanSetting.GENERATE_TO_CLASS_FILE_NAME == entryName) {
@@ -39,7 +39,7 @@ class ScanUtil {
                     RegisterTransform.fileContainsInitClass = destFile
                 }
             }
-            file.close()
+            jarFile.close()
         }
     }
 
