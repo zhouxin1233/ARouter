@@ -100,7 +100,16 @@ afterEvaluate { project ->
         repositories {
             mavenDeployer {
                 repository(url: "file://${rootProject.buildDir}/localMaven")
+                configurePom(pom)
+            }
+        }
+    }
+    tasks.create("uploadLocal", Upload) {
+        configuration = configurations.archives
 
+        repositories {
+            mavenDeployer {
+                repository(url: "file:///Users/xiaoxin/Desktop/workspace/LocalMaven")
                 configurePom(pom)
             }
         }
