@@ -91,7 +91,7 @@ public class AutowiredProcessor extends BaseProcessor {
         TypeMirror iProvider = elementUtils.getTypeElement(Consts.IPROVIDER).asType();
         TypeMirror activityTm = elementUtils.getTypeElement(Consts.ACTIVITY).asType();
         TypeMirror fragmentTm = elementUtils.getTypeElement(Consts.FRAGMENT).asType();
-        TypeMirror fragmentTmV4 = elementUtils.getTypeElement(Consts.FRAGMENT_V4).asType();
+        TypeMirror fragmentTmX = elementUtils.getTypeElement(Consts.FRAGMENT_X).asType();
 
         // JavaPoet语法 构建帮助类的inject方法的形参Object target / Build input param name.
         ParameterSpec objectParamSpec = ParameterSpec.builder(TypeName.OBJECT, "target").build();
@@ -173,7 +173,7 @@ public class AutowiredProcessor extends BaseProcessor {
                             // 是Activity就通过getIntent()的方式获得传递过来的参数
                             isActivity = true;
                             statement += "getIntent().";
-                        } else if (types.isSubtype(parent.asType(), fragmentTm) || types.isSubtype(parent.asType(), fragmentTmV4)) {   // Fragment, then use getArguments()
+                        } else if (types.isSubtype(parent.asType(), fragmentTm) || types.isSubtype(parent.asType(), fragmentTmX)) {   // Fragment, then use getArguments()
                             // 是fragment就通过getArguments()的方式获得传递过来的参数
                             statement += "getArguments().";
                         } else {

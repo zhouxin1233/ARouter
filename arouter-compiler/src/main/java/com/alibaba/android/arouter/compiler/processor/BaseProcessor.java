@@ -49,7 +49,7 @@ public abstract class BaseProcessor extends AbstractProcessor {
         /*  常用变量初始化 end *****/
 
         // options对象就是我们在每个module中声明的参数的集合
-        /**
+        /*
          * javaCompileOptions {
          *             annotationProcessorOptions {
          *                 arguments = [AROUTER_MODULE_NAME: project.getName(), AROUTER_GENERATE_DOC: "enable"]

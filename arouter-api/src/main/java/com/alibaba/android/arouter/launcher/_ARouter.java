@@ -8,7 +8,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.v4.app.ActivityCompat;
+import androidx.core.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -414,8 +414,8 @@ final class _ARouter {
                     Object instance = fragmentMeta.getConstructor().newInstance();
                     if (instance instanceof Fragment) {
                         ((Fragment) instance).setArguments(postcard.getExtras());
-                    } else if (instance instanceof android.support.v4.app.Fragment) {
-                        ((android.support.v4.app.Fragment) instance).setArguments(postcard.getExtras());
+                    } else if (instance instanceof androidx.fragment.app.Fragment) {
+                        ((androidx.fragment.app.Fragment) instance).setArguments(postcard.getExtras());
                     }
 
                     return instance;

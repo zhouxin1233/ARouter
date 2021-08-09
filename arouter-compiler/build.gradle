@@ -1,12 +1,12 @@
-apply plugin: 'java'
+apply plugin: 'java-library'
 
-compileJava {
-    sourceCompatibility = '1.8'
-    targetCompatibility = '1.8'
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 dependencies {
-    implementation 'com.alibaba:arouter-annotation:1.0.6'
+    implementation 'com.alibaba:arouter-annotation:2.0.0'
 
     annotationProcessor 'com.google.auto.service:auto-service:1.0-rc7'
     compileOnly 'com.google.auto.service:auto-service-annotations:1.0-rc7'

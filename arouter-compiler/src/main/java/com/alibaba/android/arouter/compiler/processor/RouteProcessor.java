@@ -136,7 +136,7 @@ public class RouteProcessor extends BaseProcessor {
             // 这里的Service是四大组件中的Service
             TypeMirror type_Service = elementUtils.getTypeElement(SERVICE).asType();
             TypeMirror fragmentTm = elementUtils.getTypeElement(FRAGMENT).asType();
-            TypeMirror fragmentTmV4 = elementUtils.getTypeElement(Consts.FRAGMENT_V4).asType();
+            TypeMirror fragmentTmX = elementUtils.getTypeElement(Consts.FRAGMENT_X).asType();
 
             // Interface of ARouter
             TypeElement type_IRouteGroup = elementUtils.getTypeElement(IROUTE_GROUP);
@@ -197,7 +197,7 @@ public class RouteProcessor extends BaseProcessor {
                  * 最后调用了categories方法
                  */
                 // Activity or Fragment
-                if (types.isSubtype(tm, type_Activity) || types.isSubtype(tm, fragmentTm) || types.isSubtype(tm, fragmentTmV4)) {
+                if (types.isSubtype(tm, type_Activity) || types.isSubtype(tm, fragmentTm) || types.isSubtype(tm, fragmentTmX)) {
                     // 获取 Activity 中 @Autowired 注解的属性，IProvider 类型的除外
                     // Get all fields annotation by @Autowired
                     Map<String, Integer> paramsType = new HashMap<>();
