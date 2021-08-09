@@ -28,9 +28,9 @@ import static com.alibaba.android.arouter.compiler.utils.Consts.CHAR;
  */
 public class TypeUtils {
 
-    private Types types;
-    private TypeMirror parcelableType;
-    private TypeMirror serializableType;
+    private final Types types;
+    private final TypeMirror parcelableType;
+    private final TypeMirror serializableType;
 
     public TypeUtils(Types types, Elements elements) {
         this.types = types;

@@ -1,5 +1,15 @@
 package com.alibaba.android.arouter.compiler.processor;
 
+import static com.alibaba.android.arouter.compiler.utils.Consts.ANNOTATION_TYPE_INTECEPTOR;
+import static com.alibaba.android.arouter.compiler.utils.Consts.IINTERCEPTOR;
+import static com.alibaba.android.arouter.compiler.utils.Consts.IINTERCEPTOR_GROUP;
+import static com.alibaba.android.arouter.compiler.utils.Consts.METHOD_LOAD_INTO;
+import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_INTERCEPTOR;
+import static com.alibaba.android.arouter.compiler.utils.Consts.PACKAGE_OF_GENERATE_FILE;
+import static com.alibaba.android.arouter.compiler.utils.Consts.SEPARATOR;
+import static com.alibaba.android.arouter.compiler.utils.Consts.WARNING_TIPS;
+import static javax.lang.model.element.Modifier.PUBLIC;
+
 import com.alibaba.android.arouter.compiler.utils.Consts;
 import com.alibaba.android.arouter.facade.annotation.Interceptor;
 import com.google.auto.service.AutoService;
@@ -23,15 +33,9 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedOptions;
-import javax.annotation.processing.SupportedSourceVersion;
-import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
-
-import static com.alibaba.android.arouter.compiler.utils.Consts.*;
-import static javax.lang.model.element.Modifier.PUBLIC;
 
 /**
  * Process the annotation of #{@link Interceptor}
@@ -44,7 +48,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 @SupportedAnnotationTypes(ANNOTATION_TYPE_INTECEPTOR)
 public class InterceptorProcessor extends BaseProcessor {
     // 存放着优先级和拦截器的映射关系, TreeMap默认会按照key进行排序，所以这就实现了拦截器按优先级进行排序
-    private Map<Integer, Element> interceptors = new TreeMap<>();
+    private final Map<Integer, Element> interceptors = new TreeMap<>();
     private TypeMirror iInterceptor = null;
 
     @Override
@@ -115,7 +119,7 @@ public class InterceptorProcessor extends BaseProcessor {
             TypeElement type_ITollgate = elementUtils.getTypeElement(IINTERCEPTOR);
             TypeElement type_ITollgateGroup = elementUtils.getTypeElement(IINTERCEPTOR_GROUP);
 
-            /**
+            /*
              * JavaPoet语法，构建形参类型Map<Integer, Class<? extends ITollgate>>
              *  Build input type, format as :
              *
@@ -140,7 +144,7 @@ public class InterceptorProcessor extends BaseProcessor {
                     .addParameter(tollgateParamSpec);
 
             // Generate  构建方法体，为每一个interceptor都添加一条类似interceptors.put(7, Test1Interceptor.class)的语句
-            if (null != interceptors && interceptors.size() > 0) {
+            if (interceptors.size() > 0) {
                 // Build method body
                 for (Map.Entry<Integer, Element> entry : interceptors.entrySet()) {
                     loadIntoMethodOfTollgateBuilder.addStatement("interceptors.put(" + entry.getKey() + ", $T.class)", ClassName.get((TypeElement) entry.getValue()));

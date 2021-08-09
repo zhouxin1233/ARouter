@@ -1,5 +1,14 @@
 package com.alibaba.android.arouter.compiler.processor;
 
+import static com.alibaba.android.arouter.compiler.utils.Consts.ANNOTATION_TYPE_AUTOWIRED;
+import static com.alibaba.android.arouter.compiler.utils.Consts.ISYRINGE;
+import static com.alibaba.android.arouter.compiler.utils.Consts.JSON_SERVICE;
+import static com.alibaba.android.arouter.compiler.utils.Consts.METHOD_INJECT;
+import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_AUTOWIRED;
+import static com.alibaba.android.arouter.compiler.utils.Consts.TYPE_WRAPPER;
+import static com.alibaba.android.arouter.compiler.utils.Consts.WARNING_TIPS;
+import static javax.lang.model.element.Modifier.PUBLIC;
+
 import com.alibaba.android.arouter.compiler.utils.Consts;
 import com.alibaba.android.arouter.facade.annotation.Autowired;
 import com.alibaba.android.arouter.facade.enums.TypeKind;
@@ -28,17 +37,11 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedOptions;
-import javax.annotation.processing.SupportedSourceVersion;
-import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
-
-import static com.alibaba.android.arouter.compiler.utils.Consts.*;
-import static javax.lang.model.element.Modifier.PUBLIC;
 
 /**
  * Processor used to create autowired helper
@@ -52,7 +55,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 @SupportedAnnotationTypes({ANNOTATION_TYPE_AUTOWIRED})
 public class AutowiredProcessor extends BaseProcessor {
     // 储存着 (路由节点 - 需要自动注入的参数）的映射关系
-    private Map<TypeElement, List<Element>> parentAndChild = new HashMap<>();   // Contain field need autowired and his super class.
+    private final Map<TypeElement, List<Element>> parentAndChild = new HashMap<>();   // Contain field need autowired and his super class.
     private static final ClassName ARouterClass = ClassName.get("com.alibaba.android.arouter.launcher", "ARouter");
     private static final ClassName AndroidLog = ClassName.get("android.util", "Log");
 

@@ -1,5 +1,23 @@
 package com.alibaba.android.arouter.compiler.processor;
 
+import static com.alibaba.android.arouter.compiler.utils.Consts.ACTIVITY;
+import static com.alibaba.android.arouter.compiler.utils.Consts.ANNOTATION_TYPE_AUTOWIRED;
+import static com.alibaba.android.arouter.compiler.utils.Consts.ANNOTATION_TYPE_ROUTE;
+import static com.alibaba.android.arouter.compiler.utils.Consts.FRAGMENT;
+import static com.alibaba.android.arouter.compiler.utils.Consts.IPROVIDER_GROUP;
+import static com.alibaba.android.arouter.compiler.utils.Consts.IROUTE_GROUP;
+import static com.alibaba.android.arouter.compiler.utils.Consts.ITROUTE_ROOT;
+import static com.alibaba.android.arouter.compiler.utils.Consts.METHOD_LOAD_INTO;
+import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_GROUP;
+import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_PROVIDER;
+import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_ROOT;
+import static com.alibaba.android.arouter.compiler.utils.Consts.PACKAGE_OF_GENERATE_DOCS;
+import static com.alibaba.android.arouter.compiler.utils.Consts.PACKAGE_OF_GENERATE_FILE;
+import static com.alibaba.android.arouter.compiler.utils.Consts.SEPARATOR;
+import static com.alibaba.android.arouter.compiler.utils.Consts.SERVICE;
+import static com.alibaba.android.arouter.compiler.utils.Consts.WARNING_TIPS;
+import static javax.lang.model.element.Modifier.PUBLIC;
+
 import com.alibaba.android.arouter.compiler.entity.RouteDoc;
 import com.alibaba.android.arouter.compiler.utils.Consts;
 import com.alibaba.android.arouter.facade.annotation.Autowired;
@@ -25,7 +43,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,24 +60,6 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.StandardLocation;
 
-import static com.alibaba.android.arouter.compiler.utils.Consts.ACTIVITY;
-import static com.alibaba.android.arouter.compiler.utils.Consts.ANNOTATION_TYPE_AUTOWIRED;
-import static com.alibaba.android.arouter.compiler.utils.Consts.ANNOTATION_TYPE_ROUTE;
-import static com.alibaba.android.arouter.compiler.utils.Consts.FRAGMENT;
-import static com.alibaba.android.arouter.compiler.utils.Consts.IPROVIDER_GROUP;
-import static com.alibaba.android.arouter.compiler.utils.Consts.IROUTE_GROUP;
-import static com.alibaba.android.arouter.compiler.utils.Consts.ITROUTE_ROOT;
-import static com.alibaba.android.arouter.compiler.utils.Consts.METHOD_LOAD_INTO;
-import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_GROUP;
-import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_PROVIDER;
-import static com.alibaba.android.arouter.compiler.utils.Consts.NAME_OF_ROOT;
-import static com.alibaba.android.arouter.compiler.utils.Consts.PACKAGE_OF_GENERATE_DOCS;
-import static com.alibaba.android.arouter.compiler.utils.Consts.PACKAGE_OF_GENERATE_FILE;
-import static com.alibaba.android.arouter.compiler.utils.Consts.SEPARATOR;
-import static com.alibaba.android.arouter.compiler.utils.Consts.SERVICE;
-import static com.alibaba.android.arouter.compiler.utils.Consts.WARNING_TIPS;
-import static javax.lang.model.element.Modifier.PUBLIC;
-
 /**
  * A processor used for find route.
  *
@@ -72,9 +71,9 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 @SupportedAnnotationTypes({ANNOTATION_TYPE_ROUTE, ANNOTATION_TYPE_AUTOWIRED})
 public class RouteProcessor extends BaseProcessor {
     // 存放着模块名和模块里所有路由节点的映射关系
-    private Map<String, Set<RouteMeta>> groupMap = new HashMap<>(); // ModuleName and routeMeta.
+    private final Map<String, Set<RouteMeta>> groupMap = new HashMap<>(); // ModuleName and routeMeta.
     // 存放着（分组名-对应分组帮助类的类名）的映射关系
-    private Map<String, String> rootMap = new TreeMap<>();  // Map of root metas, used for generate class file in order.
+    private final Map<String, String> rootMap = new TreeMap<>();  // Map of root metas, used for generate class file in order.
 
     private TypeMirror iProvider = null;
     private Writer docWriter;       // Writer used for write doc
@@ -192,7 +191,7 @@ public class RouteProcessor extends BaseProcessor {
                 Route route = element.getAnnotation(Route.class);
                 RouteMeta routeMeta;
 
-                /**
+                /*
                  * 接着来看，遍历routeElements , 而routeElements中存的是含有@Route注解的Element，
                  * 所以这里每一次循环实际上是对一个含有@Route的（Activity 或 IProvider 或 Service 或 Fragment）分类进行处理，
                  * 最后调用了categories方法
@@ -366,7 +365,7 @@ public class RouteProcessor extends BaseProcessor {
                 docWriter.close();
             }
 
-            //  // 生成ARouter$$PRoviders$$*** 文件 / Write provider into disk
+            //  // 生成ARouter$$Providers$$*** 文件 / Write provider into disk
             String providerMapFileName = NAME_OF_PROVIDER + SEPARATOR + moduleName;
             JavaFile.builder(PACKAGE_OF_GENERATE_FILE,
                     TypeSpec.classBuilder(providerMapFileName)
@@ -448,15 +447,12 @@ public class RouteProcessor extends BaseProcessor {
             logger.info(">>> Start categories, group = " + routeMete.getGroup() + ", path = " + routeMete.getPath() + " <<<");
             Set<RouteMeta> routeMetas = groupMap.get(routeMete.getGroup());
             if (CollectionUtils.isEmpty(routeMetas)) {
-                Set<RouteMeta> routeMetaSet = new TreeSet<>(new Comparator<RouteMeta>() {
-                    @Override
-                    public int compare(RouteMeta r1, RouteMeta r2) {
-                        try {
-                            return r1.getPath().compareTo(r2.getPath());
-                        } catch (NullPointerException npe) {
-                            logger.error(npe.getMessage());
-                            return 0;
-                        }
+                Set<RouteMeta> routeMetaSet = new TreeSet<>((r1, r2) -> {
+                    try {
+                        return r1.getPath().compareTo(r2.getPath());
+                    } catch (NullPointerException npe) {
+                        logger.error(npe.getMessage());
+                        return 0;
                     }
                 });
                 routeMetaSet.add(routeMete);
