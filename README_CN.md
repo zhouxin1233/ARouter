@@ -19,15 +19,13 @@ arouter-compiler 是arouter-api的注解处理器
 &nbsp;
 arouter-gradle-plugin 是 arouter-register Gradle插件脚本的源码。作用是通过编译时自动注册组件  
 &nbsp;
-arouter-idea-plugin 这个库是ARouter Helper这个Android studio插件的源码  
-&nbsp;
 module-java和module-kotlin是两个demo库分别用java和Kotlin来实现。主要是一些使用上的区别  
 &nbsp;
 
 
-模块|arouter-api|arouter-compiler|arouter-register|arouter-idea-plugin
----|---|---|---|---
-最新版本|[![Download](https://maven-badges.herokuapp.com/maven-central/com.alibaba/arouter-api/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.alibaba/arouter-api)|[![Download](https://maven-badges.herokuapp.com/maven-central/com.alibaba/arouter-compiler/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.alibaba/arouter-compiler)|[![Download](https://maven-badges.herokuapp.com/maven-central/com.alibaba/arouter-register/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.alibaba/arouter-register)|[![as plugin](https://img.shields.io/jetbrains/plugin/d/11428-arouter-helper.svg)](https://plugins.jetbrains.com/plugin/11428-arouter-helper)
+模块|arouter-api|arouter-compiler|arouter-register
+---|---|---|---
+最新版本|2.0.0|2.0.0|2.0.0
 
 #### Demo展示
 
@@ -134,6 +132,9 @@ module-java和module-kotlin是两个demo库分别用java和Kotlin来实现。主
 
     buildscript {
         repositories {
+            maven {
+                url "https://gitee.com/zhouxin1233/maven/raw/master"
+            }
             mavenCentral()
         }
 
@@ -549,6 +550,9 @@ module-java和module-kotlin是两个demo库分别用java和Kotlin来实现。主
 
     buildscript {
         repositories {
+            maven {
+                url "https://gitee.com/zhouxin1233/maven/raw/master"
+            }
             mavenCentral()
         }
 
