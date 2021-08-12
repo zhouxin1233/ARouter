@@ -1,32 +1,17 @@
 apply plugin: 'maven-publish'
-apply plugin: 'java-gradle-plugin'
-apply plugin: 'signing'
 
 version = VERSION_NAME
 group = GROUP
 
-def isReleaseBuild() {
-    return VERSION_NAME.contains("SNAPSHOT") == false
-}
 
-
-def getRepositoryUsername() {
-    return hasProperty('SONATYPE_NEXUS_USERNAME') ? SONATYPE_NEXUS_USERNAME : ""
-}
-
-def getRepositoryPassword() {
-    return hasProperty('SONATYPE_NEXUS_PASSWORD') ? SONATYPE_NEXUS_PASSWORD : ""
-}
-
-def configurePom(pom) {
-
-}
 task sourceJar(type: Jar) {
-    from sourceSets.main.allJava  // todo:zx 试试这个
-    archiveClassifier = "sources"
+    from sourceSets.main.allJava // todo:zx 试试这个
+    archiveClassifier.convention('sources')
+    archiveClassifier.set("sources")
 
 }
-afterEvaluate { project ->
+
+afterEvaluate {
     publishing {
         repositories {
             maven {
@@ -36,16 +21,15 @@ afterEvaluate { project ->
         }
         publications {
             // Creates a Maven publication called "release".
-            release(MavenPublication) {
+            mavenJava(MavenPublication) {
                 // Applies the component for the release build variant.
-//                from components.release
+                from components.java
                 artifact sourceJar  //配置上传源码
 
                 // You can then customize attributes of the publication as shown below.
                 groupId = GROUP
                 artifactId =  POM_ARTIFACT_ID
                 version = VERSION_NAME
-//                configurePom(pom)
                 pom {
                     name = POM_NAME
                     packaging = POM_PACKAGING
@@ -73,28 +57,12 @@ afterEvaluate { project ->
                         }
                     }
                 }
+
             }
-            // Creates a Maven publication called “debug”.
-//            debug(MavenPublication) {
-//                // Applies the component for the debug build variant.
-//                from components.debug
-//                artifact sourceJar  //配置上传源码
-//
-//                groupId = GROUP
-//                artifactId = "$POM_ARTIFACT_ID-debug"
-//                version = VERSION_NAME
-//                configurePom(pom)
-//            }
         }
     }
-
-    signing {
-        sign publishing.publications.release
-    }
-
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
+
+
+

@@ -37,4 +37,4 @@ dependencies {
     implementation "androidx.appcompat:appcompat:$APPCOMPAT_VERSION"
 }
 
-apply from: rootProject.file('gradle/publish.gradle')
+apply from: rootProject.file('gradle/publish_android.gradle')

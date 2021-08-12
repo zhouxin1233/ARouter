@@ -19,4 +19,4 @@ dependencies {
     implementation 'com.alibaba:fastjson:1.2.75'
 }
 
-apply from: rootProject.file('gradle/publish.gradle')
+apply from: rootProject.file('gradle/publish_java.gradle')

@@ -1,9 +1,22 @@
-apply plugin: 'groovy'
+apply plugin: 'groovy-gradle-plugin'
+//apply plugin: 'groovy'
+
+// apply plugin:'java-gradle-plugin',这个插件是官方推荐使用的，相当于我们引用了java和groovy，
+// 并且添加了gradleApi()的依赖,可以看这里https://docs.gradle.org/nightly/userguide/custom_plugins.html
+
 
 dependencies {
-    implementation gradleApi()
+//    implementation gradleApi()
     implementation localGroovy()
     implementation 'com.android.tools.build:gradle:4.2.2'
 }
+gradlePlugin {
+    plugins {
+        arouter {
+            id = 'com.alibaba.android.arouter'
+            implementationClass = 'com.alibaba.android.arouter.register.launch.PluginLaunch'
+        }
+    }
+}
 
-apply from: rootProject.file('gradle/publish.gradle')
+apply from: rootProject.file('gradle/publish_plugin.gradle')

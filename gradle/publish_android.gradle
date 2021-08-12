@@ -1,0 +1,54 @@
+apply plugin: 'maven-publish'
+
+version = VERSION_NAME
+group = GROUP
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+
+task sourceJar(type: Jar) {
+    from android.sourceSets.main.java.source  // todo:zx 试试这个
+    archiveClassifier.convention('sources')
+    archiveClassifier.set("sources")
+
+}
+
+afterEvaluate { project ->
+    publishing {
+        repositories {
+            maven {
+                def localMaven = IS_LOCAL.toBoolean()
+                url = localMaven ? LOCAL_REPOSITORY_URL : RELEASE_REPOSITORY_URL
+            }
+        }
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.release
+                artifact sourceJar  //配置上传源码
+
+                // You can then customize attributes of the publication as shown below.
+                groupId = GROUP
+                artifactId =  POM_ARTIFACT_ID
+                version = VERSION_NAME
+
+            }
+            // Creates a Maven publication called “debug”.
+            debug(MavenPublication) {
+                // Applies the component for the debug build variant.
+                from components.debug
+                artifact sourceJar  //配置上传源码
+
+                groupId = GROUP
+                artifactId = "$POM_ARTIFACT_ID-debug"
+                version = VERSION_NAME
+            }
+        }
+    }
+
+}
+

@@ -1,0 +1,20 @@
+apply plugin: 'maven-publish'
+
+version = VERSION_NAME
+group = GROUP
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+publishing {
+    repositories {
+        maven {
+            def localMaven = IS_LOCAL.toBoolean()
+            url = localMaven ? LOCAL_REPOSITORY_URL : RELEASE_REPOSITORY_URL
+        }
+    }
+}
+
+

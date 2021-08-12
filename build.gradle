@@ -5,16 +5,15 @@ buildscript {
         maven {
             url 'file:///Users/xiaoxin/Desktop/workspace/LocalMaven'
         }
+        mavenCentral()
+        google()
         maven {
             url 'http://dl.bintray.com/jetbrains/intellij-plugin-service'
         }
-        mavenCentral()
-        google()
+
     }
 
     dependencies {
-        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.alibaba:arouter-register:2.0.0'
     }
@@ -25,11 +24,10 @@ allprojects {
         maven {
             url 'file:///Users/xiaoxin/Desktop/workspace/LocalMaven'
         }
-        mavenLocal()
+        google()
         mavenCentral()
         maven {
             url "https://s01.oss.sonatype.org/content/repositories/releases/"
         }
-        google()
     }
 }
