@@ -13,10 +13,10 @@ dependencies {
 gradlePlugin {
     plugins {
         arouter {
-            id = 'com.alibaba.android.arouter'
+            id = 'com.alibaba.arouter'
             implementationClass = 'com.alibaba.android.arouter.register.launch.PluginLaunch'
         }
     }
 }
 
-apply from: rootProject.file('gradle/publish_plugin.gradle')
+apply from: rootProject.file('gradle/publish_java.gradle')

@@ -3,14 +3,18 @@ apply plugin: 'maven-publish'
 version = VERSION_NAME
 group = GROUP
 
+//task sourceJar(type: Jar) {
+//    from sourceSets.main.allJava // todo:zx 试试这个
+//    archiveClassifier.convention('sources')
+//    archiveClassifier.set("sources")
+//
+//}
 
-task sourceJar(type: Jar) {
-    from sourceSets.main.allJava // todo:zx 试试这个
-    archiveClassifier.convention('sources')
-    archiveClassifier.set("sources")
-
+/// 跟上面的声明的一样
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
-
 afterEvaluate {
     publishing {
         repositories {
@@ -24,7 +28,7 @@ afterEvaluate {
             mavenJava(MavenPublication) {
                 // Applies the component for the release build variant.
                 from components.java
-                artifact sourceJar  //配置上传源码
+//                artifact sourceJar  //配置上传源码
 
                 // You can then customize attributes of the publication as shown below.
                 groupId = GROUP

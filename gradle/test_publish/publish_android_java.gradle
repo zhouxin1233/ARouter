@@ -1,0 +1,69 @@
+apply plugin: 'maven-publish'
+
+version = VERSION_NAME
+group = GROUP
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+
+//task sourceJar(type: Jar) {
+//    from android.sourceSets.main.java.source  // todo:zx 试试这个
+//    archiveClassifier.convention('sources')
+//    archiveClassifier.set("sources")
+//
+//}
+
+
+afterEvaluate { project ->
+
+    def isAndroid = project.getPlugins().hasPlugin('com.android.application') ||
+            project.getPlugins().hasPlugin('com.android.library')
+
+    if (isAndroid) {
+        task sourceJar(type: Jar) {
+            from android.sourceSets.main.java.source  // todo:zx 试试这个
+            archiveClassifier.convention('sources')
+            archiveClassifier.set("sources")
+
+        }
+    } else {
+        java {
+            withJavadocJar()
+            withSourcesJar()
+        }
+    }
+
+    publishing {
+        repositories {
+            maven {
+                def localMaven = IS_LOCAL.toBoolean()
+                url = localMaven ? LOCAL_REPOSITORY_URL : RELEASE_REPOSITORY_URL
+            }
+        }
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                if (isAndroid) {
+                    from components.release
+                    artifact sourceJar  //配置上传源码
+                } else {
+                    from components.java
+                }
+
+//                artifact sourceJar  //配置上传源码
+
+                // You can then customize attributes of the publication as shown below.
+                groupId = GROUP
+                artifactId = POM_ARTIFACT_ID
+                version = VERSION_NAME
+
+            }
+        }
+    }
+
+}
+
