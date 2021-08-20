@@ -15,7 +15,7 @@ buildscript {
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.alibaba:arouter-register:2.0.0'
+        classpath 'com.alibaba:arouter-gradle-plugin:2.0.0'
     }
 }
 
