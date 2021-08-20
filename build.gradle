@@ -3,7 +3,7 @@ buildscript {
 
     repositories {
         maven {
-            url 'file:///Users/xiaoxin/Desktop/workspace/LocalMaven'
+            url LOCAL_REPOSITORY_URL
         }
         mavenCentral()
         google()
@@ -22,12 +22,9 @@ buildscript {
 allprojects {
     repositories {
         maven {
-            url 'file:///Users/xiaoxin/Desktop/workspace/LocalMaven'
+            url LOCAL_REPOSITORY_URL
         }
         google()
         mavenCentral()
-        maven {
-            url "https://s01.oss.sonatype.org/content/repositories/releases/"
-        }
     }
 }
